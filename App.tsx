@@ -1,12 +1,11 @@
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import MainNavigator from './src/navigation/MainNavigation';
-import { View } from 'react-native';
-export default function App() {
+
+export default async function App() {
   return (
-    <View>
+    <SafeAreaProvider>
       <MainNavigator />
-      <StatusBar style="auto" />
-    </View>
+    </SafeAreaProvider>
   );
 }
