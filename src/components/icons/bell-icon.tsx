@@ -6,8 +6,8 @@ const Bell = (props: IconProps) => {
   return (
     <Svg
       fill={props.color || '#000'}
-      height={props.height || 24}
-      width={props.width || 24}
+      height={props.height || '24'}
+      width={props.width || '24'}
       viewBox="0 0 459.334 459.334"
       {...props}
     >
