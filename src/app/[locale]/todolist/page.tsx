@@ -5,7 +5,7 @@ import { ToDoListNavbarProps } from '../../../staticdata/todolist-navbar';
 
 const TodoListScreen = () => {
   return (
-    <View className="flex-1 bg-white">
+    <View className="bg-white">
       <NavBar
         navTabs={ToDoListNavbarProps.navTabs}
         defaultTab={ToDoListNavbarProps.defaultTab}
