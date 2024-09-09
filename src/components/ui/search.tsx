@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const cn = (...classes: (string | undefined)[]) =>
-  classes.filter(Boolean).join(' ');
+import { cn } from '../../lib/utils';
 
 export interface SearchBarProps {
   placeholder?: string;
@@ -13,10 +11,10 @@ export interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
-  placeholder = 'Search...',
-  containerClassName = '',
-  inputClassName = '',
-  buttonClassName = '',
+  placeholder,
+  containerClassName,
+  inputClassName,
+  buttonClassName,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -41,32 +39,29 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <View
-      className={cn(
-        'flex-row items-center rounded-full h-10 border border-gray-300',
+      style={cn(
+        'flex-row items-center rounded-full h-10 border border-gray-300 w-72',
         containerClassName
       )}
-      style={{ width: 280 }}
     >
       <TextInput
-        className={cn(
+        style={cn(
           'flex-1 pl-4 text-sm text-gray-700 bg-white rounded-l-full h-full',
           inputClassName
         )}
-        placeholder={placeholder}
+        placeholder={placeholder ? placeholder : 'Search...'}
         placeholderTextColor="#999"
         value={searchQuery}
         onChangeText={setSearchQuery}
         autoCorrect={false}
-        style={{ paddingVertical: 0 }}
       />
 
       <TouchableOpacity
         onPress={searchQuery.length > 0 ? handleClearSearch : undefined}
-        className={cn(
-          'rounded-r-full h-full justify-center items-center',
+        style={cn(
+          'rounded-r-full h-full justify-center items-center w-10 h-10',
           buttonClassName
         )}
-        style={{ width: 40, height: 40 }}
       >
         <Animated.View style={{ transform: [{ rotate: rotateIcon }] }}>
           {searchQuery.length > 0 ? (
