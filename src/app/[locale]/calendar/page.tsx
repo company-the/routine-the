@@ -1,10 +1,11 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import CalendarSmall from '../../../components/ui/calendar-small';
 
 const CalendarScreen = () => {
   return (
     <View className='flex-1 justify-center items-center bg-white'>
-      <Text className='text-xl font-bold'>Calendar</Text>
+      <CalendarSmall onPress={() => console.log('Pressed')}/>
     </View>
   );
 };
