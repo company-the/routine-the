@@ -40,7 +40,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   return (
     <View
       style={cn(
-        'flex-row items-center rounded-full h-10 border border-gray-300 w-72',
+        'flex-row items-center rounded-full h-10 border border-gray-300 w-72 bg-white',
         containerClassName
       )}
     >
@@ -59,7 +59,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       <TouchableOpacity
         onPress={searchQuery.length > 0 ? handleClearSearch : undefined}
         style={cn(
-          'rounded-r-full h-full justify-center items-center w-10 h-10',
+          'h-full justify-center items-center w-10 bg-white rounded-r-full',
           buttonClassName
         )}
       >
