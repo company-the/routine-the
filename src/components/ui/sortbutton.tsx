@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { cn } from '../../lib/utils';
 
 export interface SortButtonProps {
   containerClassName?: string;
@@ -21,13 +22,15 @@ const SortOption: React.FC<SortOptionProps> = ({
 }) => (
   <TouchableOpacity
     onPress={onPress}
-    className={`h-10 justify-center px-4 ${
-      isSelected ? 'bg-gray-200' : 'bg-white'
-    } border-b border-gray-300`}
+    style={[
+      cn(
+        'h-10 justify-center px-4 border-b border-gray-300',
+        isSelected ? 'bg-gray-200' : 'bg-white'
+      ),
+    ]}
   >
     <Text
-      className={`text-center ${isSelected ? 'font-bold' : ''}`}
-      style={{ fontSize: 10, textAlign: 'center' }}
+      style={[cn('text-center text-8px', isSelected ? 'font-bold' : undefined)]}
     >
       {option}
     </Text>
@@ -90,22 +93,30 @@ const SortButton: React.FC<SortButtonProps> = ({
   });
 
   return (
-    <View className={`relative w-20 ${containerClassName}`}>
+    <View style={cn('relative w-18', containerClassName)}>
       <TouchableOpacity
         onPress={toggleDropdown}
-        className={`flex-row justify-between items-center bg-black px-2 rounded-full h-9 ${buttonClassName}`}
+        style={cn(
+          'flex-row justify-between items-center bg-black px-2 rounded-full h-9',
+          buttonClassName
+        )}
       >
-        <Text className="text-white font-bold text-sm">Sort</Text>
+        <Text style={cn('text-white font-bold text-sm')}>Sort</Text>
         <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
           <Ionicons name="chevron-down" size={16} color="white" />
         </Animated.View>
       </TouchableOpacity>
       {showDropdown && (
         <Animated.View
-          style={{ height: animatedHeight }}
-          className={`absolute top-10 w-20 bg-white rounded-lg border border-gray-300 shadow-lg overflow-hidden z-50 ${optionsClassName}`}
+          style={[
+            { height: animatedHeight },
+            cn(
+              'absolute top-10 w-18 bg-white rounded-lg border shadow-lg overflow-hidden z-50 border-gray-300',
+              optionsClassName
+            ),
+          ]}
         >
-          {options.map((option) => (
+          {options.map((option, index) => (
             <SortOption
               key={option}
               option={option}
