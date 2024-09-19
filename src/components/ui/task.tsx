@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import {
   PanGestureHandler,
-  GestureHandlerStateChangeEvent,
   PanGestureHandlerGestureEvent,
+  PanGestureHandlerStateChangeEvent,
   State,
 } from 'react-native-gesture-handler';
 import Animated, {
@@ -16,6 +16,12 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { cn } from '../../lib/utils';
 
+interface TaskItemProps {
+  item: Task;
+  isActive?: boolean;
+  isVisible: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -23,21 +29,12 @@ export interface Task {
   notes?: string;
   group?: string;
   groupColor?: string;
+  iconName?: keyof typeof Ionicons.glyphMap;
+  iconSize?: number;
+  iconColor?: string;
 }
 
-interface TaskItemProps {
-  item: Task;
-  isActive?: boolean;
-  isVisible: boolean;
-  customIcon: React.ReactNode;
-}
-
-const TaskItem: React.FC<TaskItemProps> = ({
-  item,
-  isActive,
-  isVisible,
-  customIcon,
-}) => {
+const TaskItem: React.FC<TaskItemProps> = ({ item, isActive, isVisible }) => {
   const [collapsed, setCollapsed] = useState(true);
   const [isSliding, setIsSliding] = useState(false);
   const translateX = useSharedValue(0);
@@ -82,7 +79,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
 
   const onGestureEvent = useCallback(
     (event: PanGestureHandlerGestureEvent) => {
-      const translationX = event.nativeEvent.translationX as number;
+      const translationX = event.nativeEvent.translationX;
 
       if (Math.abs(translationX) > slideThreshold) {
         setIsSliding(true);
@@ -109,7 +106,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   }, [translateX, redBoxWidth, greenBoxWidth]);
 
   const onHandlerStateChange = useCallback(
-    (event: GestureHandlerStateChangeEvent) => {
+    (event: PanGestureHandlerStateChangeEvent) => {
       if (
         event.nativeEvent.state === State.END ||
         event.nativeEvent.state === State.CANCELLED
@@ -132,16 +129,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
     };
   });
 
-  // New: Stop the group rectangle's translation after red box is fully visible
-  const groupRectangleStyle = useAnimatedStyle(() => {
-    const groupTranslateX = Math.min(0, translateX.value + maxBoxWidth); // Stop after maxBoxWidth is reached
-    return {
-      transform: [{ translateX: groupTranslateX }],
-      zIndex: -1, // Ensure the group rectangle stays behind other elements
-    };
-  });
-
-  const redBoxStyle = useAnimatedStyle(() => {
+  const DeleteBoxStyle = useAnimatedStyle(() => {
     return {
       width: redBoxWidth.value,
       height: collapsed ? 70 : 160,
@@ -156,7 +144,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
     };
   });
 
-  const greenBoxStyle = useAnimatedStyle(() => {
+  const DoneBoxStyle = useAnimatedStyle(() => {
     return {
       width: greenBoxWidth.value,
       height: collapsed ? 70 : 160,
@@ -210,14 +198,20 @@ const TaskItem: React.FC<TaskItemProps> = ({
             animatedTaskStyle,
           ]}
         >
-          <Animated.View
-            style={cn('relative w-2rem h-2rem justify-center items-center')}
+          <View
+            className={'relative w-2rem h-2rem justify-center items-center'}
           >
-            {customIcon}
-          </Animated.View>
+            {item.iconName && item.iconSize && item.iconColor && (
+              <Ionicons
+                name={item.iconName}
+                size={item.iconSize}
+                color={item.iconColor}
+              />
+            )}
+          </View>
 
           <TouchableOpacity onPress={toggleCollapse} style={cn('flex-1')}>
-            <Text style={cn('text-lg font-bold text-black')}>{item.title}</Text>
+            <Text className={'text-lg font-bold text-black'}>{item.title}</Text>
             {collapsed ? (
               <Text style={cn('text-gray-600')}>
                 {calculateTimeLeft(item.dueDate)}
@@ -229,21 +223,21 @@ const TaskItem: React.FC<TaskItemProps> = ({
             {!collapsed && (
               <View style={cn('mt-2')}>
                 {item.notes && (
-                  <View style={cn('flex-row items-center mb-1')}>
+                  <View className={'flex-row items-center mb-1'}>
                     <Ionicons
                       name="document-text-outline"
                       size={18}
                       color="#888"
                     />
-                    <Text style={cn('ml-1 text-sm text-gray-600')}>
+                    <Text className={'ml-1 text-sm text-gray-600'}>
                       Notes: {item.notes}
                     </Text>
                   </View>
                 )}
                 {item.group && (
-                  <View style={cn('flex-row items-center')}>
+                  <View className={'flex-row items-center'}>
                     <Ionicons name="people-outline" size={18} color="#888" />
-                    <Text style={cn('ml-1 text-sm text-gray-600')}>
+                    <Text className={'ml-1 text-sm text-gray-600'}>
                       Group: {item.group}
                     </Text>
                   </View>
@@ -252,7 +246,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={cn('px-2')}>
+          <TouchableOpacity className={'px-2'}>
             <Ionicons name="ellipsis-horizontal" size={24} color="black" />
           </TouchableOpacity>
 
@@ -260,19 +254,17 @@ const TaskItem: React.FC<TaskItemProps> = ({
             style={[
               cn('absolute right--4 w-[12px]'),
               animatedHeightStyle,
-              {
-                backgroundColor: item.groupColor,
-              },
+              { backgroundColor: item.groupColor },
             ]}
           />
         </Animated.View>
       </PanGestureHandler>
 
-      <Animated.View style={greenBoxStyle}>
+      <Animated.View style={DoneBoxStyle}>
         <Ionicons name="checkmark" size={24} color="white" />
       </Animated.View>
 
-      <Animated.View style={redBoxStyle}>
+      <Animated.View style={DeleteBoxStyle}>
         <Ionicons name="trash" size={24} color="white" />
       </Animated.View>
     </Animated.View>
