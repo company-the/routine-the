@@ -13,24 +13,24 @@ interface SortOptionProps {
   option: string;
   isSelected: boolean;
   onPress: () => void;
-  isLast?: boolean;
 }
 
 const SortOption: React.FC<SortOptionProps> = ({
   option,
   isSelected,
   onPress,
-  isLast,
 }) => (
   <TouchableOpacity
     onPress={onPress}
     style={cn(
-      'h-[40px] justify-center border-b border-gray-200',
-      isSelected ? 'bg-gray-200' : undefined,
-      isLast ? 'rounded-b-lg' : undefined
+      `h-10 justify-center px-4 border-b border-gray-300 ${
+        isSelected ? 'bg-gray-200' : 'bg-white'
+      }`
     )}
   >
-    <Text style={cn('text-center', isSelected ? 'font-bold' : undefined)}>
+    <Text
+      style={cn('text-center text-sm', isSelected ? 'font-bold' : undefined)}
+    >
       {option}
     </Text>
   </TouchableOpacity>
@@ -92,37 +92,35 @@ const SortButton: React.FC<SortButtonProps> = ({
   });
 
   return (
-    <View style={cn('relative w-[70px]', containerClassName)}>
+    <View style={cn('relative w-18', containerClassName)}>
       <TouchableOpacity
         onPress={toggleDropdown}
         style={cn(
-          'flex-row justify-between items-center bg-black px-2 rounded-full h-[38px]',
+          'flex-row justify-between items-center bg-black px-2 rounded-full h-9',
           buttonClassName
         )}
       >
-        <Text style={cn('text-white font-bold text-[14px]')}>Sort</Text>
+        <Text style={cn('text-white font-bold text-sm')}>Sort</Text>
         <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
           <Ionicons name="chevron-down" size={16} color="white" />
         </Animated.View>
       </TouchableOpacity>
-
       {showDropdown && (
         <Animated.View
           style={[
             { height: animatedHeight },
             cn(
-              'absolute top-[40px] w-[70px] bg-white rounded-lg border border-gray-300 shadow-lg overflow-hidden z-50',
+              'absolute top-10 w-18 bg-white rounded-lg border shadow-lg overflow-hidden z-50 border-gray-300',
               optionsClassName
             ),
           ]}
         >
-          {options.map((option, index) => (
+          {options.map((option) => (
             <SortOption
               key={option}
               option={option}
               isSelected={selectedOption === option}
               onPress={() => handleOptionSelect(option)}
-              isLast={index === options.length - 1}
             />
           ))}
         </Animated.View>
