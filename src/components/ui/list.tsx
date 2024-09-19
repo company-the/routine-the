@@ -6,10 +6,9 @@ import { ListItem } from './list_item';
 
 interface TaskListProps {
   tasks: Task[];
-  customIcon: React.ReactNode;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, customIcon }) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks }) => {
   const viewableItems = useSharedValue<ViewToken[]>([]);
 
   const onViewableItemsChanged = useRef(
@@ -23,11 +22,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, customIcon }) => {
       data={tasks}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
-        <ListItem
-          item={item}
-          viewableItems={viewableItems}
-          customIcon={customIcon}
-        />
+        <ListItem item={item} viewableItems={viewableItems} />
       )}
       onViewableItemsChanged={onViewableItemsChanged.current}
       scrollEventThrottle={16}

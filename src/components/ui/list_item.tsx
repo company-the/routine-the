@@ -10,14 +10,9 @@ import TaskItem, { Task } from './task';
 type ListItemProps = {
   viewableItems: SharedValue<ViewToken[]>;
   item: Task;
-  customIcon: React.ReactNode;
 };
 
-const ListItem: React.FC<ListItemProps> = ({
-  item,
-  viewableItems,
-  customIcon,
-}) => {
+const ListItem: React.FC<ListItemProps> = ({ item, viewableItems }) => {
   const rStyle = useAnimatedStyle(() => {
     const isVisible = Boolean(
       viewableItems.value
@@ -33,15 +28,11 @@ const ListItem: React.FC<ListItemProps> = ({
         },
       ],
     };
-  }, []);
+  }, [viewableItems.value]);
 
   return (
     <Animated.View style={rStyle}>
-      <TaskItem
-        item={item}
-        isVisible={Boolean(viewableItems.value)}
-        customIcon={customIcon}
-      />
+      <TaskItem item={item} isVisible={Boolean(viewableItems.value)} />
     </Animated.View>
   );
 };
