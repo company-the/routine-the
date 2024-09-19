@@ -1,87 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Modal,
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { styled } from 'nativewind';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Animated, {
   useSharedValue,
   withTiming,
   useAnimatedStyle,
   Easing,
 } from 'react-native-reanimated';
+import { cn } from '../../lib/utils';
 
 interface TextFieldConfig {
   placeholder: string;
+  width?: 'small' | 'medium' | 'large';
 }
 
-interface Group {
-  name: string;
-  color: string;
-}
-
-interface AddTaskModalUIProps {
+interface PopUpWindowProps {
   visible: boolean;
   onClose: () => void;
   onSave: () => void;
-  showDatePicker?: boolean;
-  showGroupSelector?: boolean;
   textFieldsConfig: TextFieldConfig[];
-  existingGroups?: Group[];
+  DatePickerComponent: React.ReactNode;
+  HorizontalListComponent: React.ReactNode;
   title?: string;
   icon?: React.ReactNode;
 }
 
-const StyledView = styled(View);
-const StyledText = styled(Text);
-const StyledTextInput = styled(TextInput);
-const StyledTouchableOpacity = styled(TouchableOpacity);
-
-const colors = [
-  '#FF6347',
-  '#FFD700',
-  '#90EE90',
-  '#87CEFA',
-  '#FF69B4',
-  '#CD5C5C',
-  '#C7CEEA',
-];
-
-const PopUpWindow: React.FC<AddTaskModalUIProps> = ({
+const PopUpWindow: React.FC<PopUpWindowProps> = ({
   visible,
   onClose,
   onSave,
-  showDatePicker = false,
-  showGroupSelector = false,
   textFieldsConfig,
-  existingGroups = [],
+  DatePickerComponent,
+  HorizontalListComponent,
   title = 'Add New Task',
   icon = <Ionicons name="add-circle" size={24} color="black" />,
 }) => {
-  const [date, setDate] = useState<Date | null>(null);
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [newGroupName, setNewGroupName] = useState<string>('');
-
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(100);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (visible) {
-      setDate(null);
-      setSelectedColor(null);
-      setSelectedGroup(null);
-      setNewGroupName('');
-
       opacity.value = withTiming(1, { duration: 300, easing: Easing.ease });
       translateY.value = withTiming(0, {
         duration: 300,
@@ -96,19 +63,6 @@ const PopUpWindow: React.FC<AddTaskModalUIProps> = ({
     }
   }, [visible]);
 
-  const showDatePickerModal = () => {
-    setDatePickerVisibility(true);
-  };
-
-  const hideDatePickerModal = () => {
-    setDatePickerVisibility(false);
-  };
-
-  const handleConfirmDate = (selectedDate: Date) => {
-    setDate(selectedDate);
-    hideDatePickerModal();
-  };
-
   const animatedBackgroundStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
@@ -117,163 +71,78 @@ const PopUpWindow: React.FC<AddTaskModalUIProps> = ({
     transform: [{ translateY: translateY.value }],
   }));
 
-  const handleSelectGroup = (groupName: string) => {
-    setSelectedGroup(groupName);
-    setSelectedColor(null);
-  };
-
-  const handleCreateNewGroup = (text: string) => {
-    setNewGroupName(text);
-    setSelectedGroup(null);
-    if (text) {
-      setSelectedColor(colors[0]);
-    }
+  const widthClasses = {
+    small: 'w-1/3',
+    medium: 'w-2/3',
+    large: 'w-full',
   };
 
   return (
     <Modal visible={visible} transparent>
       <Animated.View
         style={[
-          {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          },
+          cn('flex-1 justify-center items-center bg-black bg-opacity-50'),
           animatedBackgroundStyle,
         ]}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'position'}
-          style={{ flex: 1, justifyContent: 'center' }}
+          style={cn('flex-1 justify-center')}
         >
           <Animated.View
-            className="w-11/12 bg-white rounded-lg p-5 shadow-lg"
-            style={animatedModalStyle}
+            style={[
+              cn('bg-white rounded-lg p-5 shadow-lg'),
+              animatedModalStyle,
+              { width: '95%' },
+            ]}
           >
             <ScrollView>
-              <StyledView className="w-full">
-                <StyledView className="flex-row justify-between items-center mb-4">
-                  <StyledText className="text-xl font-semibold">
-                    {title}
-                  </StyledText>
+              <View style={cn('w-full')}>
+                <View style={cn('flex-row justify-between items-center mb-4')}>
+                  <Text style={cn('text-xl font-semibold')}>{title}</Text>
                   {icon}
-                </StyledView>
+                </View>
 
                 {textFieldsConfig.map((fieldConfig, index) => (
-                  <StyledTextInput
+                  <TextInput
                     key={index}
-                    className="border border-gray-300 p-3 mb-3 rounded-md"
+                    style={cn(
+                      'border border-gray-300 p-3 mb-3 rounded-md',
+                      widthClasses[fieldConfig.width || 'large'],
+                      'w-full'
+                    )}
                     placeholder={fieldConfig.placeholder}
                     placeholderTextColor="#A0A0A0"
                   />
                 ))}
 
-                {showDatePicker && (
-                  <StyledTouchableOpacity
-                    className="border border-gray-300 p-3 mb-3 rounded-md flex-row items-center"
-                    onPress={showDatePickerModal}
-                  >
-                    <Ionicons
-                      name="calendar-outline"
-                      size={20}
-                      color="#A0A0A0"
-                      className="mr-2"
-                    />
-                    <StyledText className="text-gray-600 ml-2">
-                      {date ? date.toDateString() : 'Select deadline'}
-                    </StyledText>
-                  </StyledTouchableOpacity>
-                )}
-                <DateTimePickerModal
-                  isVisible={isDatePickerVisible}
-                  mode="date"
-                  onConfirm={handleConfirmDate}
-                  onCancel={hideDatePickerModal}
-                />
+                {DatePickerComponent}
 
-                {showGroupSelector && (
-                  <>
-                    <StyledText className="text-lg mb-2">
-                      Select Group
-                    </StyledText>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                    >
-                      <StyledView className="flex-row mb-3">
-                        {existingGroups.map((group) => (
-                          <TouchableOpacity
-                            key={group.name}
-                            onPress={() => handleSelectGroup(group.name)}
-                            className={`py-2 px-4 rounded-lg mr-2 ${
-                              selectedGroup === group.name
-                                ? 'border-2 border-gray-600 shadow-lg'
-                                : ''
-                            }`}
-                            style={{
-                              backgroundColor: group.color,
-                            }}
-                          >
-                            <StyledText className="text-white font-bold text-sm">
-                              {group.name}
-                            </StyledText>
-                          </TouchableOpacity>
-                        ))}
-                      </StyledView>
-                    </ScrollView>
+                {HorizontalListComponent}
 
-                    <StyledTextInput
-                      className="border border-gray-300 p-3 mb-3 rounded-md"
-                      placeholder="Create New Group"
-                      value={newGroupName}
-                      onChangeText={handleCreateNewGroup}
-                      placeholderTextColor="#A0A0A0"
-                    />
-
-                    {newGroupName && (
-                      <>
-                        <StyledText className="text-lg mb-2">
-                          Select Color
-                        </StyledText>
-                        <StyledView className="flex-row flex-wrap mb-3">
-                          {colors.map((color) => (
-                            <TouchableOpacity
-                              key={color}
-                              onPress={() => setSelectedColor(color)}
-                              className={`w-8 h-8 rounded-full mr-2 mb-2 ${
-                                selectedColor === color
-                                  ? 'border-2 border-black'
-                                  : ''
-                              }`}
-                              style={{ backgroundColor: color }}
-                            />
-                          ))}
-                        </StyledView>
-                      </>
+                <View style={cn('flex-row justify-between mt-4')}>
+                  <TouchableOpacity
+                    style={cn(
+                      'bg-black py-3 px-4 rounded-md flex-1 mr-2 justify-center items-center'
                     )}
-                  </>
-                )}
-
-                <StyledView className="flex-row justify-between mt-4">
-                  <StyledTouchableOpacity
-                    className="bg-black py-3 px-4 rounded-md flex-1 mr-2 justify-center items-center"
                     onPress={onClose}
                   >
-                    <StyledText className="text-white font-bold text-center">
+                    <Text style={cn('text-white font-bold text-center')}>
                       Cancel
-                    </StyledText>
-                  </StyledTouchableOpacity>
-                  <StyledTouchableOpacity
-                    className="bg-white border border-black py-3 px-4 rounded-md flex-1 ml-2 justify-center items-center"
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={cn(
+                      'bg-white border border-black py-3 px-4 rounded-md flex-1 ml-2 justify-center items-center'
+                    )}
                     onPress={onSave}
                   >
-                    <StyledText className="text-black font-bold text-center">
+                    <Text style={cn('text-black font-bold text-center')}>
                       Save
-                    </StyledText>
-                  </StyledTouchableOpacity>
-                </StyledView>
-              </StyledView>
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </ScrollView>
           </Animated.View>
         </KeyboardAvoidingView>
