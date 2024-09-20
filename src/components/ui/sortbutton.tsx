@@ -101,7 +101,7 @@ const SortButton: React.FC<SortButtonProps> = ({
           buttonClassName
         )}
       >
-        <Text style={cn('text-white font-bold text-sm')}>Sort</Text>
+        <Text className={'text-white font-bold text-sm'}>Sort</Text>
         <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
           <Ionicons name="chevron-down" size={16} color="white" />
         </Animated.View>
