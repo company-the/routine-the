@@ -16,10 +16,20 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { cn } from '../../lib/utils';
 
+const DEFAULT_HEIGHT = 70;
+const MAX_BOX_WIDTH = 120;
+const SLIDE_THRESHOLD = 15;
+
 interface TaskItemProps {
   item: Task;
   isActive?: boolean;
   isVisible: boolean;
+  isCompact?: boolean;
+  onThreeDotsPress?: (item: Task) => void;
+  taskHeight?: number;
+  taskWidth?: string | number;
+  compactHeight?: number;
+  compactWidth?: string | number;
 }
 
 export interface Task {
@@ -29,12 +39,20 @@ export interface Task {
   notes?: string;
   group?: string;
   groupColor?: string;
-  iconName?: keyof typeof Ionicons.glyphMap;
-  iconSize?: number;
-  iconColor?: string;
+  icon?: React.ReactNode;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ item, isActive, isVisible }) => {
+const TaskItem: React.FC<TaskItemProps> = ({
+  item,
+  isActive,
+  isVisible,
+  isCompact,
+  onThreeDotsPress,
+  taskHeight = 160,
+  taskWidth = '100%',
+  compactHeight = 60,
+  compactWidth = '86%',
+}) => {
   const [collapsed, setCollapsed] = useState(true);
   const [isSliding, setIsSliding] = useState(false);
   const translateX = useSharedValue(0);
@@ -43,21 +61,30 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, isActive, isVisible }) => {
   const redBoxWidth = useSharedValue(0);
   const greenBoxWidth = useSharedValue(0);
 
-  const maxBoxWidth = 120;
-  const slideThreshold = 15;
-
   const { formatDistance } = require('date-fns');
+
+  const resetSliding = useCallback(() => {
+    translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+    redBoxWidth.value = withTiming(0, { duration: 200 });
+    greenBoxWidth.value = withTiming(0, { duration: 200 });
+    setIsSliding(false);
+  }, [translateX, redBoxWidth, greenBoxWidth]);
 
   useEffect(() => {
     if (isVisible) {
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withTiming(1, { duration: 300 });
     }
-  }, [isVisible]);
+  }, [isVisible, opacity, scale]);
 
   const animatedHeightStyle = useAnimatedStyle(() => {
+    const targetHeight = isCompact
+      ? compactHeight
+      : collapsed
+      ? DEFAULT_HEIGHT
+      : taskHeight;
     return {
-      height: withTiming(collapsed ? 70 : 160, {
+      height: withTiming(targetHeight, {
         duration: collapsed ? 400 : 600,
         easing: Easing.inOut(Easing.ease),
       }),
@@ -77,196 +104,207 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, isActive, isVisible }) => {
     }
   };
 
-  const onGestureEvent = useCallback(
+  const handleGestureEvent = useCallback(
     (event: PanGestureHandlerGestureEvent) => {
-      const translationX = event.nativeEvent.translationX;
+      if (!isCompact) {
+        const translationX = event.nativeEvent.translationX;
+        if (Math.abs(translationX) > SLIDE_THRESHOLD) {
+          setIsSliding(true);
+          translateX.value = translationX;
 
-      if (Math.abs(translationX) > slideThreshold) {
-        setIsSliding(true);
-        translateX.value = translationX;
-
-        if (translationX > 0) {
-          greenBoxWidth.value = Math.min(translationX, maxBoxWidth);
-        } else if (translationX < 0) {
-          redBoxWidth.value = Math.min(-translationX, maxBoxWidth);
+          if (translationX > 0) {
+            greenBoxWidth.value = Math.min(translationX, MAX_BOX_WIDTH);
+          } else if (translationX < 0) {
+            redBoxWidth.value = Math.min(-translationX, MAX_BOX_WIDTH);
+          }
         }
       }
     },
-    [maxBoxWidth, translateX, greenBoxWidth, redBoxWidth, slideThreshold]
+    [isCompact, greenBoxWidth, redBoxWidth, translateX]
   );
 
-  const onEnd = useCallback(() => {
-    translateX.value = withSpring(0, {
-      damping: 20,
-      stiffness: 200,
-    });
-    redBoxWidth.value = withTiming(0, { duration: 200 });
-    greenBoxWidth.value = withTiming(0, { duration: 200 });
-    setIsSliding(false);
-  }, [translateX, redBoxWidth, greenBoxWidth]);
-
-  const onHandlerStateChange = useCallback(
+  const handleStateChange = useCallback(
     (event: PanGestureHandlerStateChangeEvent) => {
       if (
         event.nativeEvent.state === State.END ||
         event.nativeEvent.state === State.CANCELLED
       ) {
-        translateX.value = withSpring(0, {
-          damping: 20,
-          stiffness: 200,
-        });
-        redBoxWidth.value = withTiming(0, { duration: 200 });
-        greenBoxWidth.value = withTiming(0, { duration: 200 });
-        setIsSliding(false);
+        resetSliding();
       }
     },
-    [translateX, redBoxWidth, greenBoxWidth]
+    [resetSliding]
   );
 
-  const animatedTaskStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  const animatedTaskStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
-  const DeleteBoxStyle = useAnimatedStyle(() => {
-    return {
-      width: redBoxWidth.value,
-      height: collapsed ? 70 : 160,
-      backgroundColor: 'red',
+  const useBoxStyle = (boxWidth: any, color: string) =>
+    useAnimatedStyle(() => ({
+      width: boxWidth.value,
+      height: collapsed ? DEFAULT_HEIGHT : taskHeight,
+      backgroundColor: color,
       justifyContent: 'center',
       alignItems: 'center',
       position: 'absolute',
-      right: 0,
-      borderTopRightRadius: 12,
-      borderBottomRightRadius: 12,
+      [color === 'red' ? 'right' : 'left']: 0,
+      borderTopLeftRadius: color === 'green' ? 12 : 0,
+      borderBottomLeftRadius: color === 'green' ? 12 : 0,
+      borderTopRightRadius: color === 'red' ? 12 : 0,
+      borderBottomRightRadius: color === 'red' ? 12 : 0,
       zIndex: 1,
-    };
-  });
+    }));
 
-  const DoneBoxStyle = useAnimatedStyle(() => {
-    return {
-      width: greenBoxWidth.value,
-      height: collapsed ? 70 : 160,
-      backgroundColor: 'green',
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'absolute',
-      left: 0,
-      borderTopLeftRadius: 12,
-      borderBottomLeftRadius: 12,
-      zIndex: 1,
-    };
-  });
-
-  const animatedContainerStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-      transform: [{ scale: scale.value }],
-    };
-  });
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
 
   const toggleCollapse = () => {
-    if (!isSliding) {
+    if (!isSliding && !isCompact) {
       setCollapsed((prev) => !prev);
     }
   };
+
+  const DeleteBoxStyle = useBoxStyle(redBoxWidth, 'red');
+  const DoneBoxStyle = useBoxStyle(greenBoxWidth, 'green');
 
   return (
     <Animated.View
       style={[
         cn(
-          'relative overflow-hidden my-0.125rem mx-4 px-4 py-5 bg-white rounded-lg shadow-md'
+          'relative overflow-hidden my-0.5 mx-4 px-4 py-3 bg-white rounded-lg shadow-md'
         ),
         animatedHeightStyle,
         animatedContainerStyle,
         isActive && { opacity: 0.7 },
+        { width: isCompact ? compactWidth : taskWidth },
       ]}
     >
-      <PanGestureHandler
-        onGestureEvent={onGestureEvent}
-        onEnded={onEnd}
-        onHandlerStateChange={onHandlerStateChange}
-        activeOffsetX={[-10, 10]}
-        failOffsetY={[-5, 5]}
-      >
-        <Animated.View
-          style={[
-            cn(
-              'flex-row items-center justify-between h-full rounded-lg bg-white'
-            ),
-            animatedTaskStyle,
-          ]}
+      {!isCompact ? (
+        <PanGestureHandler
+          onGestureEvent={handleGestureEvent}
+          onHandlerStateChange={handleStateChange}
+          activeOffsetX={[-10, 10]}
+          failOffsetY={[-5, 5]}
         >
-          <View
-            className={'relative w-2rem h-2rem justify-center items-center'}
+          <Animated.View
+            style={[
+              cn(
+                'flex-row items-center justify-between h-full rounded-lg bg-white'
+              ),
+              animatedTaskStyle,
+            ]}
           >
-            {item.iconName && item.iconSize && item.iconColor && (
-              <Ionicons
-                name={item.iconName}
-                size={item.iconSize}
-                color={item.iconColor}
-              />
-            )}
+            <View className="relative w-8 h-8 justify-center items-center mr-2">
+              {item.icon}
+            </View>
+
+            <TouchableOpacity onPress={toggleCollapse} className="flex-1">
+              <Text className="text-lg font-bold text-black">{item.title}</Text>
+              {collapsed ? (
+                <Text className="text-gray-600">
+                  {calculateTimeLeft(item.dueDate)}
+                </Text>
+              ) : (
+                <Text className="text-gray-600">Due date: {item.dueDate}</Text>
+              )}
+
+              {!collapsed && (
+                <View className="mt-2">
+                  {item.notes && (
+                    <View className="flex-row items-center mb-1">
+                      <Ionicons
+                        name="document-text-outline"
+                        size={18}
+                        color="#888"
+                      />
+                      <Text className="ml-1 text-sm text-gray-600">
+                        Notes: {item.notes}
+                      </Text>
+                    </View>
+                  )}
+                  {item.group && (
+                    <View className="flex-row items-center">
+                      <Ionicons name="people-outline" size={18} color="#888" />
+                      <Text className="ml-1 text-sm text-gray-600">
+                        Group: {item.group}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="px-2"
+              onPress={() => onThreeDotsPress?.(item)}
+            >
+              <Ionicons name="ellipsis-horizontal" size={24} color="black" />
+            </TouchableOpacity>
+
+            <Animated.View
+              style={[
+                cn('absolute -right-4 w-3'),
+                animatedHeightStyle,
+                { backgroundColor: item.groupColor },
+              ]}
+            />
+          </Animated.View>
+        </PanGestureHandler>
+      ) : (
+        <View className="flex-row items-center justify-between h-full rounded-lg bg-white px-2 py-1">
+          <View className="relative w-6 h-6 justify-center items-center mr-2">
+            {item.icon}
           </View>
 
-          <TouchableOpacity onPress={toggleCollapse} style={cn('flex-1')}>
-            <Text className={'text-lg font-bold text-black'}>{item.title}</Text>
-            {collapsed ? (
-              <Text style={cn('text-gray-600')}>
-                {calculateTimeLeft(item.dueDate)}
-              </Text>
-            ) : (
-              <Text style={cn('text-gray-600')}>Due date: {item.dueDate}</Text>
-            )}
+          <View className="flex-1 pr-2">
+            <Text
+              className="text-sm font-bold text-black"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {item.title}
+            </Text>
+            <Text
+              className="text-gray-600 text-xs"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {calculateTimeLeft(item.dueDate)}
+            </Text>
+          </View>
 
-            {!collapsed && (
-              <View style={cn('mt-2')}>
-                {item.notes && (
-                  <View className={'flex-row items-center mb-1'}>
-                    <Ionicons
-                      name="document-text-outline"
-                      size={18}
-                      color="#888"
-                    />
-                    <Text className={'ml-1 text-sm text-gray-600'}>
-                      Notes: {item.notes}
-                    </Text>
-                  </View>
-                )}
-                {item.group && (
-                  <View className={'flex-row items-center'}>
-                    <Ionicons name="people-outline" size={18} color="#888" />
-                    <Text className={'ml-1 text-sm text-gray-600'}>
-                      Group: {item.group}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity className={'px-2'}>
-            <Ionicons name="ellipsis-horizontal" size={24} color="black" />
+          <TouchableOpacity
+            className="px-1"
+            onPress={() => onThreeDotsPress?.(item)}
+          >
+            <Ionicons name="ellipsis-horizontal" size={18} color="black" />
           </TouchableOpacity>
 
           <Animated.View
             style={[
-              cn('absolute right--4 w-[12px]'),
+              cn('absolute -right-4 w-3'),
               animatedHeightStyle,
-              { backgroundColor: item.groupColor },
+              {
+                backgroundColor: item.groupColor,
+              },
             ]}
           />
-        </Animated.View>
-      </PanGestureHandler>
+        </View>
+      )}
 
-      <Animated.View style={DoneBoxStyle}>
-        <Ionicons name="checkmark" size={24} color="white" />
-      </Animated.View>
+      {!isCompact && (
+        <>
+          <Animated.View style={DoneBoxStyle}>
+            <Ionicons name="checkmark" size={24} color="white" />
+          </Animated.View>
 
-      <Animated.View style={DeleteBoxStyle}>
-        <Ionicons name="trash" size={24} color="white" />
-      </Animated.View>
+          <Animated.View style={DeleteBoxStyle}>
+            <Ionicons name="trash" size={24} color="white" />
+          </Animated.View>
+        </>
+      )}
     </Animated.View>
   );
 };
