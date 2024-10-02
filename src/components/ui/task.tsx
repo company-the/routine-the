@@ -16,20 +16,12 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { cn } from '../../lib/utils';
 
-const DEFAULT_HEIGHT = 70;
-const MAX_BOX_WIDTH = 120;
-const SLIDE_THRESHOLD = 15;
-
 interface TaskItemProps {
   item: Task;
   isActive?: boolean;
   isVisible: boolean;
   isCompact?: boolean;
   onThreeDotsPress?: (item: Task) => void;
-  taskHeight?: number;
-  taskWidth?: string | number;
-  compactHeight?: number;
-  compactWidth?: string | number;
 }
 
 export interface Task {
@@ -48,10 +40,6 @@ const TaskItem: React.FC<TaskItemProps> = ({
   isVisible,
   isCompact,
   onThreeDotsPress,
-  taskHeight = 160,
-  taskWidth = '100%',
-  compactHeight = 60,
-  compactWidth = '86%',
 }) => {
   const [collapsed, setCollapsed] = useState(true);
   const [isSliding, setIsSliding] = useState(false);
@@ -77,19 +65,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
     }
   }, [isVisible, opacity, scale]);
 
-  const animatedHeightStyle = useAnimatedStyle(() => {
-    const targetHeight = isCompact
-      ? compactHeight
-      : collapsed
-      ? DEFAULT_HEIGHT
-      : taskHeight;
-    return {
-      height: withTiming(targetHeight, {
-        duration: collapsed ? 400 : 600,
-        easing: Easing.inOut(Easing.ease),
-      }),
-    };
-  });
+  const animatedHeightStyle = useAnimatedStyle(() => ({
+    height: withTiming(collapsed ? 70 : 160, {
+      duration: collapsed ? 400 : 600,
+      easing: Easing.inOut(Easing.ease),
+    }),
+  }));
 
   const calculateTimeLeft = (dueDate: string) => {
     try {
@@ -108,14 +89,14 @@ const TaskItem: React.FC<TaskItemProps> = ({
     (event: PanGestureHandlerGestureEvent) => {
       if (!isCompact) {
         const translationX = event.nativeEvent.translationX;
-        if (Math.abs(translationX) > SLIDE_THRESHOLD) {
+        if (Math.abs(translationX) > 15) {
           setIsSliding(true);
           translateX.value = translationX;
 
           if (translationX > 0) {
-            greenBoxWidth.value = Math.min(translationX, MAX_BOX_WIDTH);
+            greenBoxWidth.value = Math.min(translationX, 120);
           } else if (translationX < 0) {
-            redBoxWidth.value = Math.min(-translationX, MAX_BOX_WIDTH);
+            redBoxWidth.value = Math.min(-translationX, 120);
           }
         }
       }
@@ -142,7 +123,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const useBoxStyle = (boxWidth: any, color: string) =>
     useAnimatedStyle(() => ({
       width: boxWidth.value,
-      height: collapsed ? DEFAULT_HEIGHT : taskHeight,
+      height: collapsed ? 70 : 160,
       backgroundColor: color,
       justifyContent: 'center',
       alignItems: 'center',
@@ -173,12 +154,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
     <Animated.View
       style={[
         cn(
-          'relative overflow-hidden my-0.5 mx-4 px-4 py-3 bg-white rounded-lg shadow-md'
+          'relative overflow-hidden my-0.5 mx-4 px-4 py-3 bg-white rounded-lg shadow-md',
+          'w-full h-40'
         ),
         animatedHeightStyle,
         animatedContainerStyle,
         isActive && { opacity: 0.7 },
-        { width: isCompact ? compactWidth : taskWidth },
       ]}
     >
       {!isCompact ? (
@@ -286,9 +267,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
             style={[
               cn('absolute -right-4 w-3'),
               animatedHeightStyle,
-              {
-                backgroundColor: item.groupColor,
-              },
+              { backgroundColor: item.groupColor },
             ]}
           />
         </View>
@@ -299,7 +278,6 @@ const TaskItem: React.FC<TaskItemProps> = ({
           <Animated.View style={DoneBoxStyle}>
             <Ionicons name="checkmark" size={24} color="white" />
           </Animated.View>
-
           <Animated.View style={DeleteBoxStyle}>
             <Ionicons name="trash" size={24} color="white" />
           </Animated.View>
