@@ -1,39 +1,64 @@
 import React, { useRef } from 'react';
 import { FlatList, ViewToken, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
-import { Task } from './task';
-import { ListItem } from './list_item';
+import ListItem from './list_item';
 
-interface TaskListProps {
-  tasks: Task[];
-  customIcon: React.ReactNode;
+interface Identifiable {
+  id: string | number;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, customIcon }) => {
-  const viewableItems = useSharedValue<ViewToken[]>([]);
+interface VerticalListProps<T extends Identifiable> {
+  data: T[];
+  renderItem: (item: T) => JSX.Element;
+  horizontal?: boolean;
+  gap?: number;
+  bottomSpace?: number;
+}
 
+const VerticalList = <T extends Identifiable>({
+  data,
+  renderItem,
+  horizontal = false,
+  gap,
+  bottomSpace,
+}: VerticalListProps<T>) => {
+  const viewableItems = useSharedValue<ViewToken[]>([]);
   const onViewableItemsChanged = useRef(
-    ({ viewableItems: vItems }: { viewableItems: ViewToken[] }) => {
-      viewableItems.value = vItems;
+    ({ viewableItems: viewable }: { viewableItems: ViewToken[] }) => {
+      viewableItems.value = viewable;
     }
   );
 
+  const defaultGap = gap !== undefined ? gap : horizontal ? 20 : 10;
+  const defaultBottomSpace = bottomSpace !== undefined ? bottomSpace : 50;
+
   return (
     <FlatList
-      data={tasks}
+      data={data}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
         <ListItem
-          item={item}
           viewableItems={viewableItems}
-          customIcon={customIcon}
+          item={item}
+          horizontal={horizontal}
+        >
+          {renderItem(item)}
+        </ListItem>
+      )}
+      horizontal={horizontal}
+      ItemSeparatorComponent={() => (
+        <View
+          style={horizontal ? { width: defaultGap } : { height: defaultGap }}
         />
       )}
+      contentContainerStyle={{
+        paddingBottom: defaultBottomSpace,
+        paddingHorizontal: horizontal ? 10 : 0,
+      }}
       onViewableItemsChanged={onViewableItemsChanged.current}
-      scrollEventThrottle={16}
-      ItemSeparatorComponent={() => <View className="h-2" />}
+      viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
     />
   );
 };
 
-export default TaskList;
+export default VerticalList;
