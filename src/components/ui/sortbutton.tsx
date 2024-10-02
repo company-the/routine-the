@@ -22,11 +22,9 @@ const SortOption: React.FC<SortOptionProps> = ({
 }) => (
   <TouchableOpacity
     onPress={onPress}
-    style={cn(
-      `h-10 justify-center px-4 border-b border-gray-300 ${
-        isSelected ? 'bg-gray-200' : 'bg-white'
-      }`
-    )}
+    className={`h-10 justify-center px-4 border-b border-gray-300 ${
+      isSelected ? 'bg-gray-200' : 'bg-white'
+    }`}
   >
     <Text
       style={cn('text-center text-sm', isSelected ? 'font-bold' : undefined)}
@@ -100,7 +98,7 @@ const SortButton: React.FC<SortButtonProps> = ({
           buttonClassName
         )}
       >
-        <Text style={cn('text-white font-bold text-sm')}>Sort</Text>
+        <Text className={'text-white font-bold text-sm'}>Sort</Text>
         <Animated.View style={{ transform: [{ rotate: arrowRotation }] }}>
           <Ionicons name="chevron-down" size={16} color="white" />
         </Animated.View>

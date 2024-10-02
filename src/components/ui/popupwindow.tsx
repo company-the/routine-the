@@ -3,11 +3,10 @@ import {
   Modal,
   View,
   Text,
-  TextInput,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -25,24 +24,18 @@ interface TextFieldConfig {
 
 interface PopUpWindowProps {
   visible: boolean;
-  onClose: () => void;
-  onSave: () => void;
   textFieldsConfig: TextFieldConfig[];
-  DatePickerComponent: React.ReactNode;
-  HorizontalListComponent: React.ReactNode;
   title?: string;
   icon?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const PopUpWindow: React.FC<PopUpWindowProps> = ({
   visible,
-  onClose,
-  onSave,
   textFieldsConfig,
-  DatePickerComponent,
-  HorizontalListComponent,
   title = 'Add New Task',
   icon = <Ionicons name="add-circle" size={24} color="black" />,
+  children,
 }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(100);
@@ -87,7 +80,7 @@ const PopUpWindow: React.FC<PopUpWindowProps> = ({
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'position'}
-          style={cn('flex-1 justify-center')}
+          className={'flex-1 justify-center'}
         >
           <Animated.View
             style={[
@@ -97,51 +90,28 @@ const PopUpWindow: React.FC<PopUpWindowProps> = ({
             ]}
           >
             <ScrollView>
-              <View style={cn('w-full')}>
-                <View style={cn('flex-row justify-between items-center mb-4')}>
-                  <Text style={cn('text-xl font-semibold')}>{title}</Text>
+              <View className={'w-full'}>
+                <View className={'flex-row justify-between items-center mb-4'}>
+                  <Text className={'text-xl font-semibold'}>{title}</Text>
                   {icon}
                 </View>
 
                 {textFieldsConfig.map((fieldConfig, index) => (
-                  <TextInput
+                  <View
                     key={index}
-                    style={cn(
-                      'border border-gray-300 p-3 mb-3 rounded-md',
-                      widthClasses[fieldConfig.width || 'large'],
-                      'w-full'
-                    )}
-                    placeholder={fieldConfig.placeholder}
-                    placeholderTextColor="#A0A0A0"
-                  />
+                    className={
+                      (widthClasses[fieldConfig.width || 'large'], 'mb-3')
+                    }
+                  >
+                    <TextInput
+                      className={'border border-gray-300 p-3 rounded-md'}
+                      placeholder={fieldConfig.placeholder}
+                      placeholderTextColor="#A0A0A0"
+                    />
+                  </View>
                 ))}
 
-                {DatePickerComponent}
-
-                {HorizontalListComponent}
-
-                <View style={cn('flex-row justify-between mt-4')}>
-                  <TouchableOpacity
-                    style={cn(
-                      'bg-black py-3 px-4 rounded-md flex-1 mr-2 justify-center items-center'
-                    )}
-                    onPress={onClose}
-                  >
-                    <Text style={cn('text-white font-bold text-center')}>
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={cn(
-                      'bg-white border border-black py-3 px-4 rounded-md flex-1 ml-2 justify-center items-center'
-                    )}
-                    onPress={onSave}
-                  >
-                    <Text style={cn('text-black font-bold text-center')}>
-                      Save
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                {children}
               </View>
             </ScrollView>
           </Animated.View>
