@@ -46,6 +46,7 @@ const VerticalList = <T extends Identifiable>({
         </ListItem>
       )}
       horizontal={horizontal}
+      showsHorizontalScrollIndicator={false}
       ItemSeparatorComponent={() => (
         <View
           style={horizontal ? { width: defaultGap } : { height: defaultGap }}
